@@ -8,6 +8,7 @@
     "firebase-tools": "^4.2.1"
   },
   "scripts": {
+    "dev": "firebase serve",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
