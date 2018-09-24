@@ -41,6 +41,10 @@ async function initAuth() {
                 name: user.displayName,
                 photoURL: user.photoURL,
             }).catch(showError);
+
+            // アプリケーションの初期化
+            initPost().catch(showError)
+            initTimeline().catch(showError)
         } else {
             $appTl.style.display = 'none';
             $authButton.innerText = 'Login';
@@ -49,7 +53,7 @@ async function initAuth() {
 
     $authButton.addEventListener('click', () => {
         if (loginUser) {
-            auth.signOut();
+            auth.signOut().then(() => location.reload());
             return;
         }
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -96,9 +100,65 @@ async function initPost() {
     });
 };
 
+async function createPostEl(doc) {
+    const db = doc.ref.firestore
+    const data = doc.data();
+    const userRef = db.collection('users').doc(data.uid);
+    const tmpl = document.querySelector('#post-template');
+    const $el = document.importNode(tmpl.content, true);
+
+    $el.querySelector('div').id = 'post-' + doc.id;
+
+    const profileSnap = await userRef.get();
+    const profile = profileSnap.data();
+
+    const $name = $el.querySelector('.name');
+    $name.innerText = profile.name || '';
+
+    const $icon = $el.querySelector('.icon');
+    $icon.src = profile.photoURL;
+
+    const $text = $el.querySelector('.text');
+    if (data.text) {
+        $text.innerText = data.text;
+    }
+
+    const $time = $el.querySelector('.time');
+    let created = new Date();
+    if (data.created) {
+        created = data.created.toDate();
+    }
+    $time.innerText = `${created.getFullYear()}/${created.getMonth() + 1}/${created.getDate()} ${created.getHours()}:${created.getMinutes()}`;
+
+    return $el
+}
+
+async function initTimeline() {
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const user = auth.currentUser;
+    const userRef = db.collection('users').doc(user.uid);
+    const tlRef = userRef.collection('timeline');
+
+    const $tl = document.getElementById('tl');
+
+    // 本来は戻り値の関数を呼んでunsubscribするけど、今回は簡単のためにlogout時にreloadしてセッションを切ってる。
+    tlRef.orderBy('created').limit(50).onSnapshot(async snap => {
+        snap.docChanges().forEach(async change => {
+            if (change.type === 'added') {
+                const $post = await createPostEl(change.doc);
+                $tl.insertBefore($post, $tl.firstChild);
+            } else if (change.type === 'removed') {
+                const $post = $tl.querySelector(`#post-${change.doc.id}`);
+                $post.parentNode.removeChild($post);
+            }
+        });
+    });
+};
+
 async function main() {
     await initAuth()
-    await initPost()
 };
 
 document.addEventListener('DOMContentLoaded', function () {
