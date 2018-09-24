@@ -1,24 +1,37 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Fire Timeline</title>
 
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/5.5.1/firebase-app.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/5.5.1/firebase-auth.js"></script>
-    <script defer src="/__/firebase/5.5.1/firebase-database.js"></script>
-    <!-- initialize the SDK after all desired features are loaded -->
-    <script defer src="/__/firebase/init.js"></script>
-  </head>
-  <body>
-    <div id="app" style="display: none;">
-      <button id="auth-button">Log in</button>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fire Timeline</title>
+
+  <!-- update the version number as needed -->
+  <script defer src="/__/firebase/5.5.1/firebase-app.js"></script>
+  <!-- include only the Firebase features as you need -->
+  <script defer src="/__/firebase/5.5.1/firebase-auth.js"></script>
+  <script defer src="/__/firebase/5.5.1/firebase-firestore.js"></script>
+  <!-- initialize the SDK after all desired features are loaded -->
+  <script defer src="/__/firebase/init.js"></script>
+</head>
+
+<body>
+  <div id="app" style="display: none;">
+    <button id="auth-button">Log in</button>
+    <div id="app-tl" style="display: none;">
+      <div style="display:flex; flex: 1;flex-direction: column;">
+        <img id="profile-image" style="width:150px;height:150px;">
+        <div><span>UID: </span><span id="uid"></span></div>
+        <div><span>Display Name: </span><span id="profile-name"></span></div>
+      </div>
+      <div style="flex: 2;">
+        TODO: タイムラインを作る
+      </div>
     </div>
-    <p id="load">Loading&hellip;</p>
+  </div>
+  <p id="load">Loading&hellip;</p>
 
-    <script src="main.js"></script>
-  </body>
+  <script src="main.js"></script>
+</body>
+
 </html>

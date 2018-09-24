@@ -1,7 +1,15 @@
+function isProfile(resource) {
+  return resource.keys().hasOnly(['name', 'photoURL']) && // name, photoURLのみ許可 それ以外のフィールドがあればエラーにする。
+    (!('name' in resource.keys()) || (resource.name is string && resource.name.size() <= 50)) && // 名前の長さは５０文字以内に制限
+    (!('photoURL' in resource.keys()) || (resource.photoURL is string && resource.photoURL.matches("^https:[/][/].*"))); // photoURLはhttps:// から始まるデータのみ
+}
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write;
+    match /users/{userId} {
+      allow get: if request.auth.uid != null;
+      allow write: if isProfile(request.resource.data) && 
+        request.auth.uid == userId;
     }
   }
 }
