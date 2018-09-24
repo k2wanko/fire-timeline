@@ -64,8 +64,41 @@ async function initAuth() {
 
 };
 
+async function initPost() {
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const $post = document.getElementById('post');
+    const $postButton = document.getElementById('post-button');
+
+    const user = auth.currentUser;
+    const userRef = db.collection('users').doc(user.uid);
+
+    $postButton.addEventListener('click', async () => {
+        // 二重投稿の予防
+        $post.disabled = true;
+        $postButton.disabled = true;
+        const text = $post.value;
+        const postRef = userRef.collection('timeline').doc();
+        try {
+            await postRef.set({
+                uid: user.uid,
+                text,
+                created: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (err) {
+            showError(err);
+        } finally {
+            $post.value = ''; // clear
+            $post.disabled = false;
+            $postButton.disabled = false;
+        }
+    });
+};
+
 async function main() {
     await initAuth()
+    await initPost()
 };
 
 document.addEventListener('DOMContentLoaded', function () {

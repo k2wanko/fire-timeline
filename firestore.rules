@@ -4,12 +4,31 @@ function isProfile(resource) {
     (!('photoURL' in resource.keys()) || (resource.photoURL is string && resource.photoURL.matches("^https:[/][/].*"))); // photoURLはhttps:// から始まるデータのみ
 }
 
+function isPost(resource) {
+  return resource.keys().hasOnly(['uid', 'text', 'created']) && 
+    resource.keys().hasAll(['uid', 'created']) && // uidとcreatedは必須にする
+    resource.uid is string &&
+    (!('text' in resource.keys()) || 
+      (resource.text is string && 
+        resource.text.size() <= 140)) &&
+    resource.created is timestamp;
+}
+
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
       allow get: if request.auth.uid != null;
       allow write: if isProfile(request.resource.data) && 
         request.auth.uid == userId;
+
+      match /timeline/{postId} {
+        allow read: if request.auth.uid != null;
+        allow create: if isPost(request.resource.data) &&
+          request.auth.uid == request.resource.data.uid && // uidは書き込むユーザーのuidと一致していなければならない。
+          request.time == request.resource.data.created && // createdはリクエスト時間と一致する必要がある。
+          request.auth.uid == userId; // 一旦ユーザー自身でしか書き込めないようにする。
+        allow delete: if request.auth.uid == userId;
+      }
     }
   }
 }
