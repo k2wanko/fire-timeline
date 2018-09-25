@@ -3,6 +3,24 @@ function showError(err) {
     console.error(err);
 };
 
+function updateProfile(user) {
+    const $profileName = document.getElementById('profile-name');
+    const $profileImage = document.getElementById('profile-image');
+    const $followButton = document.getElementById('follow-button');
+
+    const authUser = firebase.auth().currentUser;
+
+    $profileName.href = `#${user.uid}`;
+    $profileName.innerText = user.displayName || user.name || '';
+    $profileImage.src = user.photoURL;
+
+    if (authUser.uid === user.uid) {
+        $followButton.style.display = 'none';
+    } else {
+        $followButton.style.display = '';
+    }
+};
+
 async function initAuth() {
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -12,9 +30,6 @@ async function initAuth() {
     const $load = document.getElementById('load');
     const $authButton = document.getElementById('auth-button');
     const $appTl = document.getElementById('app-tl');
-    const $uid = document.getElementById('uid');
-    const $profileName = document.getElementById('profile-name');
-    const $profileImage = document.getElementById('profile-image');
 
     let loaded = false;
     let loginUser = null;
@@ -32,9 +47,7 @@ async function initAuth() {
             $appTl.style.display = 'flex'; // アプリケーションを表示する
 
             // ログイン中のユーザー情報を表示する
-            $uid.innerText = user.uid;
-            $profileName.innerText = user.displayName;
-            $profileImage.src = user.photoURL;
+            updateProfile(user);
 
             // ログイン中のユーザーのプロフィールを保存する
             db.collection('users').doc(user.uid).set({
@@ -43,8 +56,9 @@ async function initAuth() {
             }).catch(showError);
 
             // アプリケーションの初期化
-            initPost().catch(showError)
-            initTimeline().catch(showError)
+            initPost().catch(showError);
+            initTimeline().catch(showError);
+            initProfile().catch(showError);
         } else {
             $appTl.style.display = 'none';
             $authButton.innerText = 'Login';
@@ -72,11 +86,41 @@ async function initPost() {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    const $postBox = document.getElementById('post-box');
     const $post = document.getElementById('post');
     const $postButton = document.getElementById('post-button');
 
     const user = auth.currentUser;
     const userRef = db.collection('users').doc(user.uid);
+
+    async function updateUserTL() {
+        const id = getProfilePageId();
+        if ((id || user.uid) !== user.uid) {
+            $postBox.style.display = 'none';
+            try {
+                const user = await db.collection('users').doc(id).get();
+                const data = user.data();
+                if (!data) {
+                    location.href = '/404.html';
+                }
+                const profile = Object.assign({ uid: id }, data);
+                updateProfile(profile);
+            } catch (err) {
+                console.warn(err);
+                location.href = '/404.html';
+                return
+            }
+        } else {
+            $postBox.style.display = '';
+            updateProfile(user);
+        }
+    }
+
+    await updateUserTL();
+
+    window.addEventListener('hashchange', async () => {
+        await updateUserTL();
+    });
 
     $postButton.addEventListener('click', async () => {
         // 二重投稿の予防
@@ -130,8 +174,16 @@ async function createPostEl(doc) {
     }
     $time.innerText = `${created.getFullYear()}/${created.getMonth() + 1}/${created.getDate()} ${created.getHours()}:${created.getMinutes()}`;
 
-    return $el
-}
+    return $el;
+};
+
+function getProfilePageId() {
+    const hash = location.hash;
+    if (!hash) {
+        return;
+    }
+    return hash.slice(1)
+};
 
 async function initTimeline() {
     const auth = firebase.auth();
@@ -143,18 +195,37 @@ async function initTimeline() {
 
     const $tl = document.getElementById('tl');
 
-    // 本来は戻り値の関数を呼んでunsubscribするけど、今回は簡単のためにlogout時にreloadしてセッションを切ってる。
-    tlRef.orderBy('created').limit(50).onSnapshot(async snap => {
-        snap.docChanges().forEach(async change => {
-            if (change.type === 'added') {
-                const $post = await createPostEl(change.doc);
-                $tl.insertBefore($post, $tl.firstChild);
-            } else if (change.type === 'removed') {
-                const $post = $tl.querySelector(`#post-${change.doc.id}`);
-                $post.parentNode.removeChild($post);
-            }
+    function subscribeTL() {
+        const uid = getProfilePageId();
+        let ref = tlRef;
+        if (uid) {
+            ref = db.collection('users')
+                .doc(uid)
+                .collection('timeline')
+        }
+        return ref.orderBy('created').limit(50).onSnapshot(async snap => {
+            $tl.innerText = '';
+            snap.docChanges().forEach(async change => {
+                if (change.type === 'added') {
+                    const $post = await createPostEl(change.doc);
+                    $tl.insertBefore($post, $tl.firstChild);
+                } else if (change.type === 'removed') {
+                    const $post = $tl.querySelector(`#post-${change.doc.id}`);
+                    $post.parentNode.removeChild($post);
+                }
+            });
         });
+    };
+
+    let unsubscribe = subscribeTL();
+    window.addEventListener('hashchange', async () => {
+        unsubscribe();
+        unsubscribe = subscribeTL();
     });
+};
+
+async function initProfile() {
+
 };
 
 async function main() {

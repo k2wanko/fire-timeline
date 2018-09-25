@@ -21,12 +21,12 @@
     <div id="app-tl" style="display: none;">
       <div style="display:flex; flex: 1;flex-direction: column;">
         <img id="profile-image" style="width:150px;height:150px;">
-        <div><span>UID: </span><span id="uid"></span></div>
-        <div><span>Display Name: </span><span id="profile-name"></span></div>
+        <div><a id="profile-name" href="#"></a></div>
+        <button id="follow-button" style="display:none;">Follow</button>
       </div>
       <div style="flex: 2;">
         <div style="display: flex; flex-direction: column;">
-          <div style="display: flex; flex: 1; flex-direction: column;">
+          <div id="post-box" style="display: flex; flex: 1; flex-direction: column;">
             <textarea id="post" rows="3" maxlength="140" style="width: 100%;"></textarea>
             <div style="width: 100%; display: flex; justify-content: flex-end;">
               <button id="post-button" style="width: 90px; height: 31px;">Send</button>
