@@ -225,7 +225,26 @@ async function initTimeline() {
 };
 
 async function initProfile() {
+    const auth = firebase.auth();
+    const user = auth.currentUser;
+    const db = firebase.firestore();
 
+    const $followButton = document.getElementById('follow-button');
+    $followButton.addEventListener('click', async () => {
+        $followButton.disabled = true;
+
+        const id = getProfilePageId();
+        if (id) {
+            const followersRef = db.collection('users')
+                .doc(id)
+                .collection('followers');
+            await followersRef.doc(user.uid).set({
+                created: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        $followButton.disabled = false;
+    });
 };
 
 async function main() {
