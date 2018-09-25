@@ -235,12 +235,22 @@ async function initProfile() {
 
         const id = getProfilePageId();
         if (id) {
-            const followersRef = db.collection('users')
-                .doc(id)
-                .collection('followers');
-            await followersRef.doc(user.uid).set({
+            const batch = db.batch();
+            const followingRef = db.collection('users')
+                .doc(user.uid)
+                .collection('following')
+                .doc(id);
+            batch.set(followingRef, {
                 created: firebase.firestore.FieldValue.serverTimestamp()
             });
+            const followersRef = db.collection('users')
+                .doc(id)
+                .collection('followers')
+                .doc(user.uid);
+            batch.set(followersRef, {
+                created: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await batch.commit();
         }
 
         $followButton.disabled = false;

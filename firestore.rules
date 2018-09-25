@@ -14,12 +14,12 @@ function isPost(resource) {
     resource.created is timestamp;
 }
 
-function isEnabledUser(uid) {
-  return exists(/databases/$(database)/documents/users/$(uid))
-}
-
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isEnabledUser(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid))
+    }
+
     match /users/{userId} {
       allow get: if request.auth.uid != null;
       allow write: if isProfile(request.resource.data) && 
