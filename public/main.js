@@ -204,7 +204,6 @@ async function initTimeline() {
                 .collection('timeline')
         }
         return ref.orderBy('created').limit(50).onSnapshot(async snap => {
-            $tl.innerText = '';
             snap.docChanges().forEach(async change => {
                 if (change.type === 'added') {
                     const $post = await createPostEl(change.doc);
@@ -220,6 +219,7 @@ async function initTimeline() {
     let unsubscribe = subscribeTL();
     window.addEventListener('hashchange', async () => {
         unsubscribe();
+        $tl.innerText = '';
         unsubscribe = subscribeTL();
     });
 };
