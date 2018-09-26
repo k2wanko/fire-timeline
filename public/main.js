@@ -158,6 +158,7 @@ async function createPostEl(doc) {
 
     const $name = $el.querySelector('.name');
     $name.innerText = profile.name || '';
+    $name.href = `#${profileSnap.id}`
 
     const $icon = $el.querySelector('.icon');
     $icon.src = profile.photoURL;
@@ -202,6 +203,7 @@ async function initTimeline() {
             ref = db.collection('users')
                 .doc(uid)
                 .collection('timeline')
+                .where('uid', '==', uid);
         }
         return ref.orderBy('created').limit(50).onSnapshot(async snap => {
             snap.docChanges().forEach(async change => {
