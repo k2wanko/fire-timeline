@@ -232,7 +232,19 @@ async function initProfile() {
     const db = firebase.firestore();
 
     const $followButton = document.getElementById('follow-button');
-    $followButton.addEventListener('click', async () => {
+
+    const id = getProfilePageId();
+    if (id) {
+        if (id !== user.uid) {
+            const snap = await db.collection('users').doc(user.uid)
+                .collection('following').doc(id).get();
+            if (snap.exists) {
+                $followButton.disabled = true;
+            }
+        }
+    }
+
+    const onClickFollowButton = async () => {
         $followButton.disabled = true;
 
         const id = getProfilePageId();
@@ -256,6 +268,11 @@ async function initProfile() {
         }
 
         $followButton.disabled = false;
+    }
+    $followButton.addEventListener('click', onClickFollowButton);
+    window.addEventListener('hashchange', async () => {
+        $followButton.disabled = false;
+        $followButton.removeEventListener('click', onClickFollowButton);
     });
 };
 

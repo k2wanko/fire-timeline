@@ -35,6 +35,7 @@ service cloud.firestore {
       }
 
       match /following/{uid} {
+        allow read: if request.auth.uid != null;
         allow create: if request.time == request.resource.data.created &&
           isEnabledUser(uid) &&
           request.auth.uid == userId;
@@ -42,6 +43,7 @@ service cloud.firestore {
       }
 
       match /followers/{uid} {
+        allow read: if request.auth.uid != null;
         allow create: if request.time == request.resource.data.created &&
           isEnabledUser(userId) &&
           request.auth.uid == uid;
