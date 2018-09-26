@@ -30,7 +30,7 @@ service cloud.firestore {
         allow create: if isPost(request.resource.data) &&
           request.auth.uid == request.resource.data.uid && // uidは書き込むユーザーのuidと一致していなければならない。
           request.time == request.resource.data.created && // createdはリクエスト時間と一致する必要がある。
-          request.auth.uid == userId; // 一旦ユーザー自身でしか書き込めないようにする。
+          request.auth.uid == userId;
         allow delete: if request.auth.uid == userId;
       }
 
