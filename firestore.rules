@@ -26,7 +26,7 @@ service cloud.firestore {
         request.auth.uid == userId;
 
       match /timeline/{postId} {
-        allow read: if request.auth.uid != null;
+        allow read: if request.auth.uid == userId || userId == resource.data.uid;
         allow create: if isPost(request.resource.data) &&
           request.auth.uid == request.resource.data.uid && // uidは書き込むユーザーのuidと一致していなければならない。
           request.time == request.resource.data.created && // createdはリクエスト時間と一致する必要がある。
