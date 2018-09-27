@@ -150,8 +150,9 @@ async function createPostEl(doc) {
     const userRef = db.collection('users').doc(data.uid);
     const tmpl = document.querySelector('#post-template');
     const $el = document.importNode(tmpl.content, true);
+    const $container = $el.querySelector('div');
 
-    $el.querySelector('div').id = 'post-' + doc.id;
+    $container.id = 'post-' + doc.id;
 
     const profileSnap = await userRef.get();
     const profile = profileSnap.data();
@@ -174,6 +175,7 @@ async function createPostEl(doc) {
         created = data.created.toDate();
     }
     $time.innerText = `${created.getFullYear()}/${created.getMonth() + 1}/${created.getDate()} ${created.getHours()}:${created.getMinutes()}`;
+    $container.dataset.created = created.getTime();
 
     return $el;
 };
@@ -196,6 +198,16 @@ async function initTimeline() {
 
     const $tl = document.getElementById('tl');
 
+    function sortTl() {
+        [].slice.call(document.querySelectorAll('#tl div'))
+            .map(dom => {
+                const value = dom.dataset.created;
+                return { dom, value };
+            })
+            .sort((a, b) => { return b.value - a.value; })
+            .forEach(v => { $tl.appendChild(v.dom); });
+    }
+
     function subscribeTL() {
         const uid = getProfilePageId();
         let ref = tlRef;
@@ -210,6 +222,7 @@ async function initTimeline() {
                 if (change.type === 'added') {
                     const $post = await createPostEl(change.doc);
                     $tl.insertBefore($post, $tl.firstChild);
+                    sortTl();
                 } else if (change.type === 'removed') {
                     const $post = $tl.querySelector(`#post-${change.doc.id}`);
                     $post.parentNode.removeChild($post);
